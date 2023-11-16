@@ -34,11 +34,10 @@ def get_sales(date_from: str = Query(None), date_to: str = Query(None), product_
 
 
 @app.get("/revenue")
-def analyze_revenue(
+async def analyze_revenue(
     period: str = Query(..., description="Analysis period: 'daily', 'weekly', 'monthly', 'annual'"),
     start_date: date = Query(None, description="Start date in the format 'YYYY/MM/DD'"),
-    end_date: date = Query(None, description="End date in the format 'YYYY/MM/DD'")
-):
+    end_date: date = Query(None, description="End date in the format 'YYYY/MM/DD'") ):
     # Ensure that the request parameters are correctly provided and have the expected data types.
     if period not in ["daily", "weekly", "monthly", "annual"]:
         raise HTTPException(status_code=400, detail="Invalid period")
@@ -48,6 +47,7 @@ def analyze_revenue(
     query = db.query(Sale)
 
     try:
+        import json
         if start_date:
             start_date = datetime.strptime(str(start_date), "%Y-%m-%d")
         if end_date:
@@ -63,7 +63,12 @@ def analyze_revenue(
 
         revenue_data = query.all()
 
-        return revenue_data
+        json_data = [{'date': entry[0].strftime("%Y-%m-%d %H:%M:%S"), 'revenue': entry[1]} for entry in revenue_data]
+
+        json_string = json.dumps(json_data, indent=2)
+        print(json_string)
+
+        return json_string
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Error parsing date: {e}")
 
