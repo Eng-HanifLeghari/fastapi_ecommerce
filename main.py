@@ -6,6 +6,7 @@ from database import SessionLocal
 from models import Sale, Product, Inventory
 from datetime import datetime, timedelta
 from sqlalchemy import func, create_engine
+from datetime import date
 
 app = FastAPI()
 
@@ -35,8 +36,8 @@ def get_sales(date_from: str = Query(None), date_to: str = Query(None), product_
 @app.get("/revenue")
 def analyze_revenue(
     period: str = Query(..., description="Analysis period: 'daily', 'weekly', 'monthly', 'annual'"),
-    start_date: datetime = Query(None, description="Start date in the format 'YYYY/MM/DD'"),
-    end_date: datetime = Query(None, description="End date in the format 'YYYY/MM/DD'")
+    start_date: date = Query(None, description="Start date in the format 'YYYY/MM/DD'"),
+    end_date: date = Query(None, description="End date in the format 'YYYY/MM/DD'")
 ):
     # Ensure that the request parameters are correctly provided and have the expected data types.
     if period not in ["daily", "weekly", "monthly", "annual"]:
@@ -47,11 +48,9 @@ def analyze_revenue(
     query = db.query(Sale)
 
     if start_date:
-        start_date = datetime.strptime(start_date, "%Y/%m/%d")
-
+        start_date = datetime.strptime(str(start_date), "%Y-%m-%d")
     if end_date:
-        end_date = datetime.strptime(end_date, "%Y/%m/%d")
-
+        end_date = datetime.strptime(str(end_date), "%Y-%m-%d")
     if period == "daily":
         query = query.group_by(Sale.sale_date).with_entities(Sale.sale_date.label("date"), func.sum(Sale.revenue).label("revenue"))
     elif period == "weekly":
