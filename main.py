@@ -47,22 +47,25 @@ def analyze_revenue(
 
     query = db.query(Sale)
 
-    if start_date:
-        start_date = datetime.strptime(str(start_date), "%Y-%m-%d")
-    if end_date:
-        end_date = datetime.strptime(str(end_date), "%Y-%m-%d")
-    if period == "daily":
-        query = query.group_by(Sale.sale_date).with_entities(Sale.sale_date.label("date"), func.sum(Sale.revenue).label("revenue"))
-    elif period == "weekly":
-        query = query.group_by(func.year(Sale.sale_date), func.week(Sale.sale_date)).with_entities(func.year(Sale.sale_date).label("year"), func.week(Sale.sale_date).label("week"), func.sum(Sale.revenue).label("revenue"))
-    elif period == "monthly":
-        query = query.group_by(func.year(Sale.sale_date), func.month(Sale.sale_date)).with_entities(func.year(Sale.sale_date).label("year"), func.month(Sale.sale_date).label("month"), func.sum(Sale.revenue).label("revenue"))
-    elif period == "annual":
-        query = query.group_by(func.year(Sale.sale_date)).with_entities(func.year(Sale.sale_date).label("year"), func.sum(Sale.revenue).label("revenue"))
+    try:
+        if start_date:
+            start_date = datetime.strptime(str(start_date), "%Y-%m-%d")
+        if end_date:
+            end_date = datetime.strptime(str(end_date), "%Y-%m-%d")
+        if period == "daily":
+            query = query.group_by(Sale.sale_date).with_entities(Sale.sale_date.label("date"), func.sum(Sale.revenue).label("revenue"))
+        elif period == "weekly":
+            query = query.group_by(func.year(Sale.sale_date), func.week(Sale.sale_date)).with_entities(func.year(Sale.sale_date).label("year"), func.week(Sale.sale_date).label("week"), func.sum(Sale.revenue).label("revenue"))
+        elif period == "monthly":
+            query = query.group_by(func.year(Sale.sale_date), func.month(Sale.sale_date)).with_entities(func.year(Sale.sale_date).label("year"), func.month(Sale.sale_date).label("month"), func.sum(Sale.revenue).label("revenue"))
+        elif period == "annual":
+            query = query.group_by(func.year(Sale.sale_date)).with_entities(func.year(Sale.sale_date).label("year"), func.sum(Sale.revenue).label("revenue"))
 
-    revenue_data = query.all()
+        revenue_data = query.all()
 
-    return revenue_data
+        return revenue_data
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Error parsing date: {e}")
 
 
 # Endpoint to compare revenue across different periods and categories
